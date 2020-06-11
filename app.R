@@ -14,13 +14,6 @@ library(ggplot2)
 #background list
 background <- list("default"= "OpenStreetMap.Mapnik", "vivid" = "Esri.NatGeoWorldMap", "black/white"= "Stamen.Toner")
 
-#full university dataset
-allu.ep <- GET(
-    "http://universities.hipolabs.com/search?name=NULL&country=NULL", 
-    query=list(name = NULL, country = NULL)
-)
-allu <- fromJSON(content(allu.ep, as = "text", encoding="UTF-8"), flatten = TRUE)
-
 
 ### page2 ###
 #US NEWS top 100 school rank table
@@ -108,7 +101,7 @@ ui <- navbarPage("WorldTopU", id="worldU",
                                
                                h4("University Locator"),
                                
-                               selectInput("ucountry", "Country", choices = c("---", unique(allu$country)), selected = "---"),
+                               selectInput("ucountry", "Country", choices = c("---", unique(usnews$Country)), selected = "---"),
                                selectInput("uname", "University Name", choices = NULL, selected = "---" ),
                                radioButtons("background", "Visual Background",
                                             choices = names(background), 
@@ -192,7 +185,7 @@ server <- function(input, output, session) {
     
     #update name search input depend on country 
     observe({
-        namematch <- allu %>% filter(country == input$ucountry) %>% pull(name)
+        namematch <- usnews %>% filter(Country == input$ucountry) %>% pull(University)
         updateSelectInput(session, "uname", choices = c("---", namematch), selected = "---")
     })   
     
@@ -376,7 +369,7 @@ server <- function(input, output, session) {
             html_node("div#uniData") %>%
             html_nodes("p.Paragraph-sc-1iyax29-0.gynMKH") %>%
             html_text()
-        dfA <- tibble(tagA, dataA) %>% transmute( "School A" = dataA, Category = tagA)
+        dfA <- tibble(tagA, dataA) %>% transmute("University A" = dataA, Category = tagA)
         
         #get B's info
         urlreadB <- usnews %>% filter(University==input$namesearchB) %>% pull(URL) %>% read_html()
@@ -390,7 +383,7 @@ server <- function(input, output, session) {
             html_node("div#uniData") %>%
             html_nodes("p.Paragraph-sc-1iyax29-0.gynMKH") %>%
             html_text()
-        dfB <- tibble(tagB, dataB) %>% transmute("School B" = dataB, Category = tagB)
+        dfB <- tibble(tagB, dataB) %>% transmute("University B" = dataB, Category = tagB)
         
         #get df for A and B
         dfAB <- dfA %>% inner_join(dfB, by="Category") %>%
